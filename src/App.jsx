@@ -1,10 +1,17 @@
 import React, { useState, useMemo, useRef } from "react";
-import { Search, Plus, Minus, Check, Clock, User, LayoutGrid, ClipboardList, ChevronDown, ChevronUp, Flower2, Zap } from "lucide-react";
+import { Search, Plus, Minus, Check, Clock, User, LayoutGrid, ClipboardList, ChevronDown, ChevronUp, Flower2, Zap, Lock } from "lucide-react";
 import { useOrdersData } from "./useOrdersData";
 
+const PIN_STORAGE_KEY = "floracao_unlocked";
+
 export default function App() {
+  const [unlocked, setUnlocked] = useState(() => localStorage.getItem(PIN_STORAGE_KEY) === "true");
   const [view, setView] = useState("rapido");
   const data = useOrdersData();
+
+  if (!unlocked) {
+    return <PinGate onUnlock={() => { localStorage.setItem(PIN_STORAGE_KEY, "true"); setUnlocked(true); }} />;
+  }
 
   if (data.loading) {
     return <div style={{ padding: 40, textAlign: "center", color: "#8A8377" }}>A carregar...</div>;
@@ -31,6 +38,47 @@ export default function App() {
           <TabButton active={view === "empregado"} onClick={() => setView("empregado")} icon={<ClipboardList size={20} />} label="Registar" />
           <TabButton active={view === "pai"} onClick={() => setView("pai")} icon={<LayoutGrid size={20} />} label="Apanhado" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PinGate({ onUnlock }) {
+  const [pin, setPin] = useState("");
+  const [wrong, setWrong] = useState(false);
+
+  function submit() {
+    if (pin === import.meta.env.VITE_APP_PIN) {
+      onUnlock();
+    } else {
+      setWrong(true);
+      setPin("");
+    }
+  }
+
+  return (
+    <div style={{
+      fontFamily: "'Inter', system-ui, sans-serif", background: "#F7F5F1", minHeight: "100vh",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24,
+    }}>
+      <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 28, border: "1px solid #EEEAE0", maxWidth: 320, width: "100%", textAlign: "center" }}>
+        <Lock size={28} color="#4A6B4D" style={{ marginBottom: 12 }} />
+        <div style={{ fontSize: 18, fontWeight: 700, color: "#2B2A26", marginBottom: 4 }}>Floração</div>
+        <div style={{ fontSize: 13, color: "#8A8377", marginBottom: 16 }}>Código de acesso</div>
+        <input
+          type="password"
+          inputMode="numeric"
+          value={pin}
+          onChange={(e) => { setPin(e.target.value); setWrong(false); }}
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+          placeholder="••••••"
+          autoFocus
+          style={{ width: "100%", padding: "13px 12px", borderRadius: 10, border: wrong ? "2px solid #B14A4A" : "1.5px solid #E3DFD5", fontSize: 20, textAlign: "center", letterSpacing: 4, outline: "none", boxSizing: "border-box", marginBottom: 14 }}
+        />
+        {wrong && <div style={{ color: "#B14A4A", fontSize: 13, marginBottom: 10 }}>Código errado, tenta outra vez.</div>}
+        <button onClick={submit} style={{ width: "100%", padding: "13px 0", borderRadius: 10, border: "none", background: "#4A6B4D", color: "#FFFFFF", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+          Entrar
+        </button>
       </div>
     </div>
   );
