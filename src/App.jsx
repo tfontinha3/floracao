@@ -55,6 +55,7 @@ function TabButton({ active, onClick, icon, label }) {
 
 function FastEntryView({ data }) {
   const { employees, flowers, detalhe, addOrder } = data;
+  const ownerName = employees.find((e) => e.is_owner)?.name ?? "";
   const todayStr = new Date().toISOString().slice(0, 10);
   const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
@@ -75,10 +76,10 @@ function FastEntryView({ data }) {
     return flowers.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 6);
   }, [flowerQuery, flowers]);
 
-  // Sessão: entradas do "Pai" para a data escolhida, vindas do detalhe já carregado
+  // Sessão: entradas do dono para a data escolhida, vindas do detalhe já carregado
   const sessionEntries = useMemo(
-    () => detalhe.filter((e) => e.employee_name === "Pai" && e.delivery_date === date),
-    [detalhe, date]
+    () => detalhe.filter((e) => e.employee_name === ownerName && e.delivery_date === date),
+    [detalhe, date, ownerName]
   );
 
   const liveTotals = useMemo(() => {
@@ -100,7 +101,7 @@ function FastEntryView({ data }) {
     setSubmitting(true);
     try {
       await addOrder({
-        employeeName: "Pai",
+        employeeName: ownerName,
         clientName: client,
         flowerName: selectedFlower,
         quantity: qty,
@@ -129,7 +130,7 @@ function FastEntryView({ data }) {
   return (
     <div style={{ padding: "20px 16px 8px" }}>
       <div style={{ marginBottom: 16 }}>
-        <div style={eyebrowStyle}>Modo Rápido — Pai</div>
+        <div style={eyebrowStyle}>Modo Rápido — {ownerName}</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#2B2A26", marginTop: 2 }}>Bater o papel</div>
         <div style={{ fontSize: 13, color: "#8A8377", marginTop: 4 }}>Vai preenchendo linha a linha. A soma à direita atualiza sozinha.</div>
       </div>
