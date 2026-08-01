@@ -183,13 +183,10 @@ function FastEntryView({ data }) {
         <div style={{ fontSize: 13, color: "#8A8377", marginTop: 4 }}>Vai preenchendo linha a linha. A soma à direita atualiza sozinha.</div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        {[0, 1, 2].map((offset) => {
-          const d = new Date(); d.setDate(d.getDate() + offset);
-          const iso = d.toISOString().slice(0, 10);
-          const label = offset === 0 ? "Hoje" : offset === 1 ? "Amanhã" : d.toLocaleDateString("pt-PT", { weekday: "short" });
-          return <button key={iso} onClick={() => setDate(iso)} style={dateChipStyle(date === iso)}>{label}</button>;
-        })}
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        {getDeliveryDateOptions().map((opt) => (
+          <button key={opt.iso} onClick={() => setDate(opt.iso)} style={dateChipStyle(date === opt.iso)}>{opt.label}</button>
+        ))}
       </div>
 
       <div style={liveBannerStyle}>
@@ -373,13 +370,10 @@ function EmployeeView({ data }) {
         </div>
 
         <label style={labelStyle}>Data de entrega</label>
-        <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-          {[0, 1, 2].map((offset) => {
-            const d = new Date(); d.setDate(d.getDate() + offset);
-            const iso = d.toISOString().slice(0, 10);
-            const label = offset === 0 ? "Hoje" : offset === 1 ? "Amanhã" : d.toLocaleDateString("pt-PT", { weekday: "short" });
-            return <button key={iso} onClick={() => setDate(iso)} style={dateChipStyle(date === iso)}>{label}</button>;
-          })}
+        <div style={{ display: "flex", gap: 8, marginBottom: 18, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          {getDeliveryDateOptions().map((opt) => (
+            <button key={opt.iso} onClick={() => setDate(opt.iso)} style={dateChipStyle(date === opt.iso)}>{opt.label}</button>
+          ))}
         </div>
 
         <button onClick={submitEntry} disabled={!canSubmit} style={{
@@ -504,6 +498,38 @@ function FatherView({ data }) {
 
 /* ---------------- SHARED ---------------- */
 
+// Datas possíveis para entrega: hoje até ao fim da semana seguinte (a janela desliza
+// sozinha à medida que os dias passam — nunca é preciso tocar nisto).
+function getDeliveryDateOptions() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dow = today.getDay(); // 0 = domingo .. 6 = sábado
+  const daysUntilSunday = dow === 0 ? 0 : 7 - dow;
+  const endOfNextWeek = new Date(today);
+  endOfNextWeek.setDate(today.getDate() + daysUntilSunday + 7);
+
+  const todayIso = today.toISOString().slice(0, 10);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const tomorrowIso = tomorrow.toISOString().slice(0, 10);
+
+  const options = [];
+  const cursor = new Date(today);
+  while (cursor <= endOfNextWeek) {
+    const iso = cursor.toISOString().slice(0, 10);
+    let label;
+    if (iso === todayIso) label = "Hoje";
+    else if (iso === tomorrowIso) label = "Amanhã";
+    else {
+      const weekday = cursor.toLocaleDateString("pt-PT", { weekday: "short" }).replace(/\.$/, "");
+      label = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${cursor.getDate()}`;
+    }
+    options.push({ iso, label });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return options;
+}
+
 function highlightMatch(text, query) {
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return text;
@@ -514,7 +540,7 @@ function pillStyle(active) {
   return { padding: "10px 18px", borderRadius: 999, border: active ? "2px solid #4A6B4D" : "2px solid #E3DFD5", background: active ? "#4A6B4D" : "#FFFFFF", color: active ? "#FFFFFF" : "#2B2A26", fontWeight: 600, fontSize: 15, cursor: "pointer" };
 }
 function dateChipStyle(active) {
-  return { flex: 1, padding: "10px 0", borderRadius: 10, border: active ? "2px solid #4A6B4D" : "1.5px solid #E3DFD5", background: active ? "#EAF0EA" : "#FFFFFF", color: "#2B2A26", fontWeight: 600, fontSize: 13, cursor: "pointer", textTransform: "capitalize" };
+  return { flex: "0 0 auto", padding: "10px 16px", borderRadius: 10, border: active ? "2px solid #4A6B4D" : "1.5px solid #E3DFD5", background: active ? "#EAF0EA" : "#FFFFFF", color: "#2B2A26", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" };
 }
 
 const eyebrowStyle = { fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: "#8A8377", fontWeight: 600 };
