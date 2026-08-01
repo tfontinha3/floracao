@@ -21,7 +21,11 @@ manual de apanhar encomendas em papel e somar à mão.
 - `src/useOrdersData.js` — todo o acesso a dados vive aqui; a UI nunca fala com o Supabase
   diretamente.
 - `schema.sql` — schema completo (tabelas, views, RLS, seed data). Corre-se uma vez no SQL
-  Editor do Supabase ao criar um projeto novo.
+  Editor do Supabase ao criar um projeto novo. Catálogo de **91 flores** (só flor de corte),
+  organizadas em 19 famílias (Rosas, Cravos, Crisântemos, Gérberas, Tulipas, Lírios, Orquídeas,
+  Hortênsias, Alstroemérias, Girassóis, Antúrios, Peónias, Frésias, Margaridas/Ásteres, Íris,
+  Estrelícias, Enchimento, Ranúnculos, Folhagens/Verdes). A coluna `family` na tabela `flowers`
+  aparece no dropdown de pesquisa da app.
 
 ## Correr localmente
 
@@ -64,3 +68,7 @@ corrompe o secret (acrescenta um BOM invisível que parte os headers HTTP no bro
 - `gh auth login --with-token` falhava sempre com "Bad credentials" nesta máquina mesmo com
   tokens válidos (confirmado por chamada direta à API do GitHub) — contornado autenticando via
   variável de ambiente `GH_TOKEN` em vez de `gh auth login`.
+- **Cuidado com `.ps1` e acentos**: um ficheiro de script gravado sem BOM UTF-8 é lido pelo
+  Windows PowerShell 5.1 no codepage local, corrompendo qualquer literal acentuado dentro do
+  próprio ficheiro (ex.: "Antúrio" virava "AntÃºrio"). Comandos inline (`-Command`, não `-File`)
+  não têm este problema. Para dados com acentos, usa sempre comando inline ou lê de um JSON.
