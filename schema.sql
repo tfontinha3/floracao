@@ -25,6 +25,7 @@ create table flowers (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
   unit text default 'molho',
+  family text,
   active boolean default true
 );
 
@@ -97,21 +98,73 @@ create policy "allow all - orders" on orders for all using (true) with check (tr
 -- SEED DATA — ajusta os nomes reais antes de correr
 -- ============================================
 insert into employees (name, is_owner) values
-  ('Pai', true),
-  ('Ana', false),
-  ('Bruno', false),
-  ('Carla', false),
-  ('Miguel', false);
+  ('Heitor', true),
+  ('Márico', false),
+  ('Rafael', false),
+  ('Alzira', false);
 
-insert into flowers (name, unit) values
-  ('Rosa Vermelha', 'molho'), ('Rosa Branca', 'molho'), ('Rosa Amarela', 'molho'), ('Rosa Cor-de-Rosa', 'molho'),
-  ('Cravo Vermelho', 'molho'), ('Cravo Branco', 'molho'), ('Cravo Misto', 'molho'),
-  ('Tulipa Amarela', 'molho'), ('Tulipa Vermelha', 'molho'), ('Tulipa Rosa', 'molho'),
-  ('Lírio Branco', 'molho'), ('Lírio Tigre', 'molho'), ('Lírio Casablanca', 'molho'),
-  ('Girassol', 'molho'), ('Crisântemo Branco', 'molho'), ('Crisântemo Amarelo', 'molho'),
-  ('Gérbera Mista', 'molho'), ('Gérbera Vermelha', 'molho'), ('Orquídea Branca', 'molho'), ('Orquídea Roxa', 'molho'),
-  ('Hortênsia Azul', 'molho'), ('Hortênsia Branca', 'molho'), ('Margarida', 'molho'), ('Íris Roxa', 'molho'),
-  ('Antúrio Vermelho', 'molho'), ('Peônia Rosa', 'molho'), ('Estrelícia', 'molho'), ('Freesia Branca', 'molho');
+-- Catálogo de flor de corte, organizado por família (só flor de corte — o negócio não vende
+-- plantas de vaso nem de jardim, seguindo a divisão que a própria Royal FloraHolland/VBN usa
+-- no primeiro nível de classificação da indústria).
+insert into flowers (name, unit, family) values
+  -- Rosas
+  ('Rosa Vermelha', 'molho', 'Rosas'), ('Rosa Branca', 'molho', 'Rosas'), ('Rosa Amarela', 'molho', 'Rosas'),
+  ('Rosa Cor-de-Rosa', 'molho', 'Rosas'), ('Rosa Laranja', 'molho', 'Rosas'), ('Rosa Bordô', 'molho', 'Rosas'),
+  ('Rosa Lilás', 'molho', 'Rosas'), ('Rosa Salmão', 'molho', 'Rosas'), ('Rosa Bicolor', 'molho', 'Rosas'),
+  ('Mini Rosa', 'molho', 'Rosas'),
+  -- Cravos
+  ('Cravo Vermelho', 'molho', 'Cravos'), ('Cravo Branco', 'molho', 'Cravos'), ('Cravo Misto', 'molho', 'Cravos'),
+  ('Cravo Rosa', 'molho', 'Cravos'), ('Cravo Amarelo', 'molho', 'Cravos'), ('Mini Cravo', 'molho', 'Cravos'),
+  -- Crisântemos
+  ('Crisântemo Branco', 'molho', 'Crisântemos'), ('Crisântemo Amarelo', 'molho', 'Crisântemos'),
+  ('Crisântemo Bronze', 'molho', 'Crisântemos'), ('Crisântemo Lilás', 'molho', 'Crisântemos'),
+  ('Crisântemo Pompom Misto', 'molho', 'Crisântemos'), ('Spray Crisântemo', 'molho', 'Crisântemos'),
+  -- Gérberas
+  ('Gérbera Mista', 'molho', 'Gérberas'), ('Gérbera Vermelha', 'molho', 'Gérberas'), ('Gérbera Amarela', 'molho', 'Gérberas'),
+  ('Gérbera Laranja', 'molho', 'Gérberas'), ('Gérbera Rosa', 'molho', 'Gérberas'), ('Gérbera Branca', 'molho', 'Gérberas'),
+  ('Mini Gérbera', 'molho', 'Gérberas'),
+  -- Tulipas
+  ('Tulipa Amarela', 'molho', 'Tulipas'), ('Tulipa Vermelha', 'molho', 'Tulipas'), ('Tulipa Rosa', 'molho', 'Tulipas'),
+  ('Tulipa Branca', 'molho', 'Tulipas'), ('Tulipa Roxa', 'molho', 'Tulipas'), ('Tulipa Papagaio', 'molho', 'Tulipas'),
+  -- Lírios
+  ('Lírio Branco', 'molho', 'Lírios'), ('Lírio Tigre', 'molho', 'Lírios'), ('Lírio Casablanca', 'molho', 'Lírios'),
+  ('Lírio Oriental', 'molho', 'Lírios'), ('Lírio Asiático', 'molho', 'Lírios'), ('Lírio LA Híbrido', 'molho', 'Lírios'),
+  -- Orquídeas
+  ('Orquídea Branca', 'molho', 'Orquídeas'), ('Orquídea Roxa', 'molho', 'Orquídeas'),
+  ('Orquídea Cymbidium', 'molho', 'Orquídeas'), ('Orquídea Dendrobium', 'molho', 'Orquídeas'),
+  -- Hortênsias
+  ('Hortênsia Azul', 'molho', 'Hortênsias'), ('Hortênsia Branca', 'molho', 'Hortênsias'),
+  ('Hortênsia Rosa', 'molho', 'Hortênsias'), ('Hortênsia Verde Antique', 'molho', 'Hortênsias'),
+  -- Alstroemérias
+  ('Alstroemeria Rosa', 'molho', 'Alstroemérias'), ('Alstroemeria Branca', 'molho', 'Alstroemérias'),
+  ('Alstroemeria Laranja', 'molho', 'Alstroemérias'), ('Alstroemeria Amarela', 'molho', 'Alstroemérias'),
+  ('Alstroemeria Roxa', 'molho', 'Alstroemérias'),
+  -- Girassóis
+  ('Girassol', 'molho', 'Girassóis'), ('Girassol Mini', 'molho', 'Girassóis'),
+  -- Antúrios
+  ('Antúrio Vermelho', 'molho', 'Antúrios'), ('Antúrio Branco', 'molho', 'Antúrios'),
+  ('Antúrio Rosa', 'molho', 'Antúrios'), ('Antúrio Verde', 'molho', 'Antúrios'),
+  -- Peónias
+  ('Peônia Rosa', 'molho', 'Peónias'), ('Peônia Branca', 'molho', 'Peónias'), ('Peônia Vermelha', 'molho', 'Peónias'),
+  -- Frésias
+  ('Freesia Branca', 'molho', 'Frésias'), ('Freesia Amarela', 'molho', 'Frésias'), ('Freesia Roxa', 'molho', 'Frésias'),
+  -- Margaridas/Ásteres
+  ('Margarida', 'molho', 'Margaridas/Ásteres'), ('Áster Roxo', 'molho', 'Margaridas/Ásteres'),
+  ('Áster Misto', 'molho', 'Margaridas/Ásteres'),
+  -- Íris
+  ('Íris Roxa', 'molho', 'Íris'), ('Íris Branca', 'molho', 'Íris'), ('Íris Azul', 'molho', 'Íris'),
+  -- Estrelícias
+  ('Estrelícia', 'molho', 'Estrelícias'),
+  -- Enchimento
+  ('Gypsophila Branca', 'molho', 'Enchimento'), ('Gypsophila Rosa', 'molho', 'Enchimento'),
+  ('Statice Roxo', 'molho', 'Enchimento'), ('Statice Misto', 'molho', 'Enchimento'), ('Limonium', 'molho', 'Enchimento'),
+  -- Ranúnculos
+  ('Ranúnculo Vermelho', 'molho', 'Ranúnculos'), ('Ranúnculo Rosa', 'molho', 'Ranúnculos'),
+  ('Ranúnculo Branco', 'molho', 'Ranúnculos'), ('Ranúnculo Misto', 'molho', 'Ranúnculos'),
+  -- Folhagens/Verdes
+  ('Feto', 'molho', 'Folhagens/Verdes'), ('Eucalipto', 'molho', 'Folhagens/Verdes'), ('Salal', 'molho', 'Folhagens/Verdes'),
+  ('Aspidistra', 'molho', 'Folhagens/Verdes'), ('Samambaia', 'molho', 'Folhagens/Verdes'), ('Ruscus', 'molho', 'Folhagens/Verdes'),
+  ('Folha de Monstera', 'molho', 'Folhagens/Verdes'), ('Folha de Palmeira', 'molho', 'Folhagens/Verdes'), ('Avenca', 'molho', 'Folhagens/Verdes');
 
 -- ============================================
 -- FUTURO (fase 2): Fornecedores

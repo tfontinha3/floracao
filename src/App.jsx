@@ -219,7 +219,12 @@ function FastEntryView({ data }) {
             />
             {flowerOpen && flowerQuery && matches.length > 0 && (
               <div style={dropdownStyle}>
-                {matches.map((f) => <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>{highlightMatch(f.name, flowerQuery)}</div>)}
+                {matches.map((f) => (
+                  <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>
+                    <div>{highlightMatch(f.name, flowerQuery)}</div>
+                    {f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -518,6 +523,7 @@ const inputStyle = { width: "100%", padding: "13px 12px", borderRadius: 10, bord
 const inputStyleSm = { width: "100%", padding: "10px 10px", borderRadius: 9, border: "1.5px solid #E3DFD5", fontSize: 14.5, outline: "none", boxSizing: "border-box", color: "#2B2A26", background: "#FCFBF9" };
 const dropdownStyle = { position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#FFFFFF", border: "1.5px solid #E3DFD5", borderRadius: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden" };
 const dropdownItemStyle = { padding: "12px 14px", fontSize: 15, color: "#2B2A26", cursor: "pointer", borderBottom: "1px solid #F2EFE8" };
+const dropdownItemFamilyStyle = { fontSize: 11.5, color: "#B0AB9E", marginTop: 1 };
 const stepperBtnStyle = { width: 44, height: 44, borderRadius: 10, border: "1.5px solid #E3DFD5", background: "#FCFBF9", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#2B2A26" };
 const stepperBtnStyleSm = { width: 34, height: 34, borderRadius: 8, border: "1.5px solid #E3DFD5", background: "#FCFBF9", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#2B2A26" };
 const entryRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#FFFFFF", borderRadius: 10, border: "1px solid #EEEAE0", marginBottom: 8 };
