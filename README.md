@@ -17,6 +17,10 @@ manual de apanhar encomendas em papel e somar à mão.
 - `src/App.jsx` — as 3 vistas: **Modo Rápido** (o dono bate o papel), **Registar** (empregados
   registam entregas), **Apanhado** (vista agregada por dia/flor). Também tem o ecrã de PIN
   (`PinGate`) que trava o acesso à app.
+  A data de entrega é sempre calculada a partir de `new Date()` — hoje até ao fim da semana
+  seguinte (`getDeliveryDateOptions()`), em chips com scroll horizontal. Um `setInterval` de 60s
+  no componente `App` força um re-render quando o dia civil muda, para a app se atualizar sozinha
+  mesmo que fique aberta de um dia para o outro no telemóvel (sem precisar de recarregar).
 - `src/supabaseClient.js` — inicialização do cliente Supabase, lê de `import.meta.env`.
 - `src/useOrdersData.js` — todo o acesso a dados vive aqui; a UI nunca fala com o Supabase
   diretamente.

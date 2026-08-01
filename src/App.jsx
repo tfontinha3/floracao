@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Search, Plus, Minus, Check, Clock, User, LayoutGrid, ClipboardList, ChevronDown, ChevronUp, Flower2, Zap, Lock } from "lucide-react";
 import { useOrdersData } from "./useOrdersData";
 
@@ -8,6 +8,22 @@ export default function App() {
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(PIN_STORAGE_KEY) === "true");
   const [view, setView] = useState("rapido");
   const data = useOrdersData();
+
+  // Se a app ficar aberta de um dia para o outro (ex.: telemóvel do Heitor a noite toda),
+  // isto força um re-render quando a data muda, para "Hoje"/"Amanhã" e a janela de entrega
+  // se atualizarem sozinhos sem precisar de recarregar a página.
+  const [, setDayTick] = useState(0);
+  useEffect(() => {
+    let lastDay = new Date().toISOString().slice(0, 10);
+    const id = setInterval(() => {
+      const day = new Date().toISOString().slice(0, 10);
+      if (day !== lastDay) {
+        lastDay = day;
+        setDayTick((t) => t + 1);
+      }
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   if (!unlocked) {
     return <PinGate onUnlock={() => { localStorage.setItem(PIN_STORAGE_KEY, "true"); setUnlocked(true); }} />;
