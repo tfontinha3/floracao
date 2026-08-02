@@ -11,16 +11,19 @@ manual de apanhar encomendas em papel e somar à mão.
 - Vite + React (JS puro, sem TypeScript)
 - Supabase (Postgres + REST + Realtime) como backend
 - Deploy automático: GitHub Actions → GitHub Pages, a cada push para `main`
+- PWA instalável (`vite-plugin-pwa`) — dá para instalar no ecrã principal do telemóvel a partir
+  do Chrome, sem loja de apps
 
 ## Estrutura
 
-- `src/App.jsx` — as 3 vistas: **Modo Rápido** (o dono bate o papel), **Registar** (empregados
-  registam entregas), **Apanhado** (vista agregada por dia/flor). Também tem o ecrã de PIN
-  (`PinGate`) que trava o acesso à app.
-  A data de entrega é sempre calculada a partir de `new Date()` — hoje até ao fim da semana
-  seguinte (`getDeliveryDateOptions()`), em chips com scroll horizontal. Um `setInterval` de 60s
-  no componente `App` força um re-render quando o dia civil muda, para a app se atualizar sozinha
-  mesmo que fique aberta de um dia para o outro no telemóvel (sem precisar de recarregar).
+- `src/App.jsx` — as 3 vistas: **Modo Rápido** (o dono bate o papel, sem pedir nome de cliente —
+  fica associado a um cliente placeholder "Sem cliente" na BD), **Flores** (catálogo só de
+  consulta, agrupado por família), **Apanhado** (vista agregada por dia/flor). Também tem o ecrã
+  de PIN (`PinGate`) que trava o acesso à app.
+  A data de entrega no Modo Rápido escolhe-se num calendário mensal (`DeliveryCalendar`) — qualquer
+  dia a partir de hoje, sem limite de meses à frente. Um `setInterval` de 60s no componente `App`
+  força um re-render quando o dia civil muda, para a app se atualizar sozinha mesmo que fique
+  aberta de um dia para o outro no telemóvel (sem precisar de recarregar).
 - `src/supabaseClient.js` — inicialização do cliente Supabase, lê de `import.meta.env`.
 - `src/useOrdersData.js` — todo o acesso a dados vive aqui; a UI nunca fala com o Supabase
   diretamente.
@@ -31,6 +34,9 @@ manual de apanhar encomendas em papel e somar à mão.
   Estrelícias, Enchimento, Ranúnculos, Folhagens/Verdes, Vivaz, Gladíolos, Antirrhinum, Lisianthus,
   Proteáceas, Decorativos). A coluna `family` na tabela `flowers` aparece no dropdown de pesquisa
   da app. O catálogo foi expandido a partir da folha de apanhado em papel usada antes da app.
+- `public/manifest.json` + `public/icons/` — manifest da PWA e os ícones (192, 512, maskable-512).
+  `vite.config.js` regista o `vite-plugin-pwa` com `manifest: false` (o manifest é este ficheiro
+  estático, não gerado pelo plugin) e `registerType: 'autoUpdate'`.
 
 ## Correr localmente
 
@@ -77,3 +83,10 @@ corrompe o secret (acrescenta um BOM invisível que parte os headers HTTP no bro
   Windows PowerShell 5.1 no codepage local, corrompendo qualquer literal acentuado dentro do
   próprio ficheiro (ex.: "Antúrio" virava "AntÃºrio"). Comandos inline (`-Command`, não `-File`)
   não têm este problema. Para dados com acentos, usa sempre comando inline ou lê de um JSON.
+- **Service worker da PWA fica preso em versões antigas**: depois de um deploy novo, um
+  telemóvel/browser que já tinha visitado o site antes pode continuar a mostrar a versão anterior
+  indefinidamente, porque o service worker antigo continua a servir o cache dele. Não basta
+  recarregar — é preciso limpar dados do site (Chrome → Definições do site → Limpar e repor) ou,
+  em DevTools, `navigator.serviceWorker.getRegistrations()` + `unregister()` e `caches.delete()`.
+  Isto só afeta quem já visitou antes de um deploy; visitas novas (ex.: o telemóvel do Heitor) não
+  têm este problema.
