@@ -180,7 +180,8 @@ insert into flowers (name, unit, family) values
   ('Folha de Monstera', 'molho', 'Folhagens/Verdes'), ('Folha de Palmeira', 'molho', 'Folhagens/Verdes'), ('Avenca', 'molho', 'Folhagens/Verdes'),
   ('Folha de Estrelícia', 'molho', 'Folhagens/Verdes'), ('Beargrass', 'molho', 'Folhagens/Verdes'),
   ('Folha de Roebellini', 'molho', 'Folhagens/Verdes'), ('Arália', 'molho', 'Folhagens/Verdes'),
-  ('Snakegrass', 'molho', 'Folhagens/Verdes'), ('Bambu', 'molho', 'Folhagens/Verdes'), ('Feto Azul', 'molho', 'Folhagens/Verdes');
+  ('Snakegrass', 'molho', 'Folhagens/Verdes'), ('Bambu', 'molho', 'Folhagens/Verdes'), ('Feto Azul', 'molho', 'Folhagens/Verdes'),
+  ('Trifene', 'molho', 'Folhagens/Verdes'), ('Pinheiro', 'molho', 'Folhagens/Verdes');
 
 -- ============================================
 -- FUTURO (fase 2): Fornecedores

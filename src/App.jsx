@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Search, Plus, Minus, Check, Clock, User, LayoutGrid, ClipboardList, ChevronDown, ChevronUp, Flower2, Zap, Lock } from "lucide-react";
+import { Plus, Minus, LayoutGrid, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Flower2, Zap, Lock } from "lucide-react";
 import { useOrdersData } from "./useOrdersData";
 
 const PIN_STORAGE_KEY = "floracao_unlocked";
@@ -43,7 +43,7 @@ export default function App() {
   return (
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif", background: "#F7F5F1", minHeight: "100vh" }}>
       <div style={{ maxWidth: 460, margin: "0 auto", paddingBottom: 90 }}>
-        {view === "empregado" && <EmployeeView data={data} />}
+        {view === "flores" && <FlowerCatalogView data={data} />}
         {view === "rapido" && <FastEntryView data={data} />}
         {view === "pai" && <FatherView data={data} />}
       </div>
@@ -51,7 +51,7 @@ export default function App() {
       <div style={tabBarStyle}>
         <div style={{ maxWidth: 460, margin: "0 auto", display: "flex" }}>
           <TabButton active={view === "rapido"} onClick={() => setView("rapido")} icon={<Zap size={20} />} label="Modo Rápido" />
-          <TabButton active={view === "empregado"} onClick={() => setView("empregado")} icon={<ClipboardList size={20} />} label="Registar" />
+          <TabButton active={view === "flores"} onClick={() => setView("flores")} icon={<Flower2 size={20} />} label="Flores" />
           <TabButton active={view === "pai"} onClick={() => setView("pai")} icon={<LayoutGrid size={20} />} label="Apanhado" />
         </div>
       </div>
@@ -122,7 +122,6 @@ const QUICK_ENTRY_CLIENT = "Sem cliente";
 function FastEntryView({ data }) {
   const { employees, flowers, detalhe, addOrder } = data;
   const ownerName = employees.find((e) => e.is_owner)?.name ?? "";
-  const todayStr = new Date().toISOString().slice(0, 10);
   const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
   const [date, setDate] = useState(tomorrowStr);
@@ -193,13 +192,9 @@ function FastEntryView({ data }) {
       <div style={{ marginBottom: 16 }}>
         <div style={eyebrowStyle}>Modo Rápido — {ownerName}</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#2B2A26", marginTop: 2 }}>Bater o papel</div>
-        <div style={{ fontSize: 13, color: "#8A8377", marginTop: 4 }}>Vai preenchendo linha a linha. A soma à direita atualiza sozinha.</div>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, marginBottom: 14, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        {getDeliveryDateOptions().map((opt) => (
-          <button key={opt.iso} onClick={() => setDate(opt.iso)} style={dateChipStyle(date === opt.iso)}>{opt.label}</button>
-        ))}
+        <div style={{ fontSize: 13, color: "#8A8377", marginTop: 4 }}>
+          A registar para <strong style={{ color: "#4A6B4D" }}>{formatDateLabel(date).toLowerCase()}</strong> — escolhe outro dia no calendário em baixo.
+        </div>
       </div>
 
       <div style={liveBannerStyle}>
@@ -256,7 +251,7 @@ function FastEntryView({ data }) {
 
       {liveTotals.length > 0 && (
         <div style={{ marginBottom: 10 }}>
-          <div style={{ ...eyebrowStyle, marginBottom: 8 }}>Soma ao vivo — {date === tomorrowStr ? "amanhã" : date === todayStr ? "hoje" : date}</div>
+          <div style={{ ...eyebrowStyle, marginBottom: 8 }}>Soma ao vivo — {formatDateLabel(date).toLowerCase()}</div>
           <div style={{ background: "#FFFFFF", borderRadius: 14, border: "1px solid #EEEAE0", overflow: "hidden" }}>
             {liveTotals.map(([flower, qty], i) => (
               <div key={flower} style={{
@@ -278,135 +273,132 @@ function FastEntryView({ data }) {
       {sessionEntries.length === 0 && (
         <div style={{ textAlign: "center", color: "#B0AB9E", padding: "24px 0", fontSize: 13 }}>Ainda sem linhas nesta sessão. Começa a bater o papel ↑</div>
       )}
+
+      <div style={{ marginTop: 18 }}>
+        <div style={{ ...eyebrowStyle, marginBottom: 8 }}>Data de entrega</div>
+        <DeliveryCalendar selected={date} onSelect={setDate} />
+      </div>
+    </div>
+  );
+}
+
+const WEEKDAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+function buildCalendarWeeks(viewDate) {
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // 0 = segunda
+
+  const cells = [];
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(year, month, day);
+    cells.push({ date: d, iso: d.toISOString().slice(0, 10) });
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+function DeliveryCalendar({ selected, onSelect }) {
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
+
+  const monthLabel = viewDate.toLocaleDateString("pt-PT", { month: "long", year: "numeric" });
+  const weeks = useMemo(() => buildCalendarWeeks(viewDate), [viewDate]);
+  const isCurrentMonth = viewDate.toISOString().slice(0, 7) === todayIso.slice(0, 7);
+
+  function goPrevMonth() {
+    if (isCurrentMonth) return;
+    setViewDate((d) => { const nd = new Date(d); nd.setMonth(nd.getMonth() - 1); return nd; });
+  }
+  function goNextMonth() {
+    setViewDate((d) => { const nd = new Date(d); nd.setMonth(nd.getMonth() + 1); return nd; });
+  }
+
+  return (
+    <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #EEEAE0" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <button onClick={goPrevMonth} disabled={isCurrentMonth} style={calendarNavBtnStyle(isCurrentMonth)}><ChevronLeft size={18} /></button>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#2B2A26", textTransform: "capitalize" }}>{monthLabel}</div>
+        <button onClick={goNextMonth} style={calendarNavBtnStyle(false)}><ChevronRight size={18} /></button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4 }}>
+        {WEEKDAY_LABELS.map((w) => (
+          <div key={w} style={{ textAlign: "center", fontSize: 10.5, fontWeight: 700, color: "#B0AB9E", padding: "4px 0" }}>{w}</div>
+        ))}
+      </div>
+
+      {weeks.map((week, wi) => (
+        <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4 }}>
+          {week.map((day, di) => {
+            if (!day) return <div key={di} />;
+            const isPast = day.iso < todayIso;
+            const isSelected = day.iso === selected;
+            const isToday = day.iso === todayIso;
+            return (
+              <button key={di} disabled={isPast} onClick={() => onSelect(day.iso)} style={calendarDayStyle({ isSelected, isToday, isPast })}>
+                {day.date.getDate()}
+              </button>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
 
 /* ============================================================
-   EMPREGADO
+   CATÁLOGO DE FLORES (só consulta)
    ============================================================ */
 
-function EmployeeView({ data }) {
-  const { employees, flowers, detalhe, addOrder } = data;
-  const [employee, setEmployee] = useState(null);
-  const [client, setClient] = useState("");
-  const [flowerQuery, setFlowerQuery] = useState("");
-  const [flowerOpen, setFlowerOpen] = useState(false);
-  const [selectedFlower, setSelectedFlower] = useState(null);
-  const [qty, setQty] = useState(1);
-  const [date, setDate] = useState("");
-  const [justAdded, setJustAdded] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+function FlowerCatalogView({ data }) {
+  const { flowers } = data;
 
-  const matches = useMemo(() => {
-    if (!flowerQuery.trim()) return [];
-    const q = flowerQuery.toLowerCase();
-    return flowers.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [flowerQuery, flowers]);
-
-  const canSubmit = employee && client.trim() && selectedFlower && qty > 0 && date && !submitting;
-
-  function pickFlower(f) { setSelectedFlower(f.name); setFlowerQuery(f.name); setFlowerOpen(false); }
-
-  async function submitEntry() {
-    if (!canSubmit) return;
-    setSubmitting(true);
-    try {
-      await addOrder({ employeeName: employee, clientName: client, flowerName: selectedFlower, quantity: qty, deliveryDate: date });
-      setClient(""); setFlowerQuery(""); setSelectedFlower(null); setQty(1);
-      setJustAdded(true);
-      setTimeout(() => setJustAdded(false), 1400);
-    } catch (err) {
-      alert("Erro ao guardar: " + err.message);
-    } finally {
-      setSubmitting(false);
+  const grouped = useMemo(() => {
+    const byFamily = {};
+    for (const f of flowers) {
+      const family = f.family || "Outras";
+      (byFamily[family] ||= []).push(f);
     }
-  }
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const mine = employee ? detalhe.filter((e) => e.employee_name === employee) : detalhe;
+    return Object.entries(byFamily)
+      .sort(([a], [b]) => a.localeCompare(b, "pt"))
+      .map(([family, items]) => ({ family, items: items.slice().sort((a, b) => a.name.localeCompare(b.name, "pt")) }));
+  }, [flowers]);
 
   return (
     <div style={{ padding: "20px 16px 8px" }}>
-      <div style={{ marginBottom: 20 }}>
-        <div style={eyebrowStyle}>Apanhado de Encomendas</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#2B2A26", marginTop: 2 }}>
-          {new Date().toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" })}
-        </div>
+      <div style={{ marginBottom: 18 }}>
+        <div style={eyebrowStyle}>Catálogo</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "#2B2A26", marginTop: 2 }}>Flores no Sistema</div>
+        <div style={{ fontSize: 13, color: "#8A8377", marginTop: 4 }}>Só para consulta — para registar encomendas usa o Modo Rápido.</div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Quem és tu?</label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {employees.filter((e) => !e.is_owner).map((e) => (
-            <button key={e.id} onClick={() => setEmployee(e.name)} style={pillStyle(employee === e.name)}>{e.name}</button>
-          ))}
-        </div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <div style={summaryCardStyle}><div style={summaryNumStyle}>{flowers.length}</div><div style={summaryLabelStyle}>flores</div></div>
+        <div style={summaryCardStyle}><div style={summaryNumStyle}>{grouped.length}</div><div style={summaryLabelStyle}>famílias</div></div>
       </div>
 
-      <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", border: "1px solid #EEEAE0" }}>
-        <label style={labelStyle}>Cliente</label>
-        <div style={{ position: "relative", marginBottom: 16 }}>
-          <User size={18} style={{ position: "absolute", left: 12, top: 14, color: "#8A8377" }} />
-          <input value={client} onChange={(e) => setClient(e.target.value)} placeholder="Nome do cliente" style={{ ...inputStyle, paddingLeft: 40 }} />
-        </div>
-
-        <label style={labelStyle}>Flor</label>
-        <div style={{ position: "relative", marginBottom: 4 }}>
-          <Search size={18} style={{ position: "absolute", left: 12, top: 14, color: "#8A8377" }} />
-          <input
-            value={flowerQuery}
-            onChange={(e) => { setFlowerQuery(e.target.value); setSelectedFlower(null); setFlowerOpen(true); }}
-            onFocus={() => setFlowerOpen(true)}
-            placeholder="Escreve para procurar..."
-            style={{ ...inputStyle, paddingLeft: 40, border: selectedFlower ? "2px solid #4A6B4D" : "1.5px solid #E3DFD5" }}
-          />
-          {selectedFlower && <Check size={18} style={{ position: "absolute", right: 12, top: 14, color: "#4A6B4D" }} />}
-          {flowerOpen && flowerQuery && matches.length > 0 && (
-            <div style={dropdownStyle}>
-              {matches.map((f) => <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>{highlightMatch(f.name, flowerQuery)}</div>)}
-            </div>
-          )}
-        </div>
-        <div style={{ height: 12 }} />
-
-        <label style={labelStyle}>Quantidade (molhos)</label>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-          <button onClick={() => setQty((q) => Math.max(1, q - 1))} style={stepperBtnStyle}><Minus size={20} /></button>
-          <div style={{ fontSize: 26, fontWeight: 700, minWidth: 40, textAlign: "center", color: "#2B2A26" }}>{qty}</div>
-          <button onClick={() => setQty((q) => q + 1)} style={stepperBtnStyle}><Plus size={20} /></button>
-        </div>
-
-        <label style={labelStyle}>Data de entrega</label>
-        <div style={{ display: "flex", gap: 8, marginBottom: 18, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          {getDeliveryDateOptions().map((opt) => (
-            <button key={opt.iso} onClick={() => setDate(opt.iso)} style={dateChipStyle(date === opt.iso)}>{opt.label}</button>
-          ))}
-        </div>
-
-        <button onClick={submitEntry} disabled={!canSubmit} style={{
-          width: "100%", padding: "16px 0", borderRadius: 12, border: "none",
-          background: canSubmit ? "#4A6B4D" : "#DDD9CE", color: "#FFFFFF", fontWeight: 700, fontSize: 16,
-          cursor: canSubmit ? "pointer" : "not-allowed",
-        }}>
-          {submitting ? "A guardar..." : justAdded ? "Adicionado ✓" : "Adicionar Encomenda"}
-        </button>
-      </div>
-
-      {mine.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ ...eyebrowStyle, marginBottom: 10 }}>{employee ? `Registadas por ti (${mine.length})` : `Todas as encomendas (${mine.length})`}</div>
-          {mine.slice(0, 8).map((e) => (
-            <div key={e.id} style={entryRowStyle}>
-              <div>
-                <div style={{ fontWeight: 600, color: "#2B2A26", fontSize: 14 }}>{e.flower_name} × {e.quantity}</div>
-                <div style={{ fontSize: 12, color: "#8A8377", marginTop: 2 }}>{e.client_name} · {e.employee_name} · entrega {e.delivery_date === todayStr ? "hoje" : e.delivery_date}</div>
+      {grouped.map(({ family, items }) => (
+        <div key={family} style={{ marginBottom: 20 }}>
+          <div style={{ ...eyebrowStyle, marginBottom: 8 }}>{family} ({items.length})</div>
+          <div style={{ background: "#FFFFFF", borderRadius: 14, border: "1px solid #EEEAE0", overflow: "hidden" }}>
+            {items.map((f, i) => (
+              <div key={f.id} style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+                borderTop: i > 0 ? "1px solid #F2EFE8" : "none",
+              }}>
+                <Flower2 size={15} color="#4A6B4D" />
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#2B2A26" }}>{f.name}</span>
               </div>
-              <Clock size={16} color="#C4BFB2" />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -433,14 +425,6 @@ function FatherView({ data }) {
   const totalOrders = detalhe.length;
   const totalQty = apanhado.reduce((s, r) => s + Number(r.total_quantity), 0);
 
-  function dateLabel(iso) {
-    const today = new Date().toISOString().slice(0, 10);
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-    if (iso === today) return "Hoje";
-    if (iso === tomorrow) return "Amanhã";
-    return new Date(iso).toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" });
-  }
-
   return (
     <div style={{ padding: "20px 16px 8px" }}>
       <div style={{ marginBottom: 18 }}>
@@ -461,7 +445,7 @@ function FatherView({ data }) {
         return (
           <div key={date} style={{ marginBottom: 22 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#2B2A26", textTransform: "capitalize" }}>Entrega — {dateLabel(date)}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#2B2A26", textTransform: "capitalize" }}>Entrega — {formatDateLabel(date)}</div>
               <div style={{ fontSize: 12, color: "#8A8377", fontWeight: 600 }}>{dayTotal} molhos</div>
             </div>
             <div style={{ background: "#FFFFFF", borderRadius: 14, border: "1px solid #EEEAE0", overflow: "hidden" }}>
@@ -508,34 +492,12 @@ function FatherView({ data }) {
 
 // Datas possíveis para entrega: hoje até ao fim da semana seguinte (a janela desliza
 // sozinha à medida que os dias passam — nunca é preciso tocar nisto).
-function getDeliveryDateOptions() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dow = today.getDay(); // 0 = domingo .. 6 = sábado
-  const daysUntilSunday = dow === 0 ? 0 : 7 - dow;
-  const endOfNextWeek = new Date(today);
-  endOfNextWeek.setDate(today.getDate() + daysUntilSunday + 7);
-
-  const todayIso = today.toISOString().slice(0, 10);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const tomorrowIso = tomorrow.toISOString().slice(0, 10);
-
-  const options = [];
-  const cursor = new Date(today);
-  while (cursor <= endOfNextWeek) {
-    const iso = cursor.toISOString().slice(0, 10);
-    let label;
-    if (iso === todayIso) label = "Hoje";
-    else if (iso === tomorrowIso) label = "Amanhã";
-    else {
-      const weekday = cursor.toLocaleDateString("pt-PT", { weekday: "short" }).replace(/\.$/, "");
-      label = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${cursor.getDate()}`;
-    }
-    options.push({ iso, label });
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return options;
+function formatDateLabel(iso) {
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  if (iso === today) return "Hoje";
+  if (iso === tomorrow) return "Amanhã";
+  return new Date(iso).toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" });
 }
 
 function highlightMatch(text, query) {
@@ -544,23 +506,26 @@ function highlightMatch(text, query) {
   return <>{text.slice(0, idx)}<strong style={{ color: "#4A6B4D" }}>{text.slice(idx, idx + query.length)}</strong>{text.slice(idx + query.length)}</>;
 }
 
-function pillStyle(active) {
-  return { padding: "10px 18px", borderRadius: 999, border: active ? "2px solid #4A6B4D" : "2px solid #E3DFD5", background: active ? "#4A6B4D" : "#FFFFFF", color: active ? "#FFFFFF" : "#2B2A26", fontWeight: 600, fontSize: 15, cursor: "pointer" };
+function calendarNavBtnStyle(disabled) {
+  return { width: 30, height: 30, borderRadius: 8, border: "1.5px solid #E3DFD5", background: disabled ? "#F7F5F1" : "#FCFBF9", display: "flex", alignItems: "center", justifyContent: "center", cursor: disabled ? "default" : "pointer", color: disabled ? "#DDD9CE" : "#2B2A26" };
 }
-function dateChipStyle(active) {
-  return { flex: "0 0 auto", padding: "10px 16px", borderRadius: 10, border: active ? "2px solid #4A6B4D" : "1.5px solid #E3DFD5", background: active ? "#EAF0EA" : "#FFFFFF", color: "#2B2A26", fontWeight: 600, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" };
+function calendarDayStyle({ isSelected, isToday, isPast }) {
+  return {
+    aspectRatio: "1", border: isToday && !isSelected ? "1.5px solid #4A6B4D" : "1.5px solid transparent",
+    borderRadius: 8, background: isSelected ? "#4A6B4D" : "transparent",
+    color: isPast ? "#DDD9CE" : isSelected ? "#FFFFFF" : "#2B2A26",
+    fontSize: 13, fontWeight: isSelected || isToday ? 700 : 500,
+    cursor: isPast ? "default" : "pointer",
+  };
 }
 
 const eyebrowStyle = { fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: "#8A8377", fontWeight: 600 };
 const labelStyle = { display: "block", fontSize: 12, fontWeight: 600, color: "#8A8377", marginBottom: 6, marginTop: 2 };
-const inputStyle = { width: "100%", padding: "13px 12px", borderRadius: 10, border: "1.5px solid #E3DFD5", fontSize: 16, outline: "none", boxSizing: "border-box", color: "#2B2A26", background: "#FCFBF9" };
 const inputStyleSm = { width: "100%", padding: "10px 10px", borderRadius: 9, border: "1.5px solid #E3DFD5", fontSize: 14.5, outline: "none", boxSizing: "border-box", color: "#2B2A26", background: "#FCFBF9" };
 const dropdownStyle = { position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#FFFFFF", border: "1.5px solid #E3DFD5", borderRadius: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden" };
 const dropdownItemStyle = { padding: "12px 14px", fontSize: 15, color: "#2B2A26", cursor: "pointer", borderBottom: "1px solid #F2EFE8" };
 const dropdownItemFamilyStyle = { fontSize: 11.5, color: "#B0AB9E", marginTop: 1 };
-const stepperBtnStyle = { width: 44, height: 44, borderRadius: 10, border: "1.5px solid #E3DFD5", background: "#FCFBF9", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#2B2A26" };
 const stepperBtnStyleSm = { width: 34, height: 34, borderRadius: 8, border: "1.5px solid #E3DFD5", background: "#FCFBF9", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#2B2A26" };
-const entryRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#FFFFFF", borderRadius: 10, border: "1px solid #EEEAE0", marginBottom: 8 };
 const tabBarStyle = { position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #EEEAE0", boxShadow: "0 -2px 10px rgba(0,0,0,0.04)" };
 const summaryCardStyle = { flex: 1, background: "#FFFFFF", border: "1px solid #EEEAE0", borderRadius: 12, padding: "12px 8px", textAlign: "center" };
 const summaryNumStyle = { fontSize: 20, fontWeight: 700, color: "#4A6B4D" };
