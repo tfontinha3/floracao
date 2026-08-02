@@ -2,15 +2,16 @@
   "name": "Encomendas — Floração",
   "short_name": "Encomendas",
   "description": "Registo e apanhado de encomendas de flores",
-  "start_url": ".",
-  "scope": ".",
+  "start_url": "/floracao/",
+  "scope": "/floracao/",
+  "id": "/floracao/",
   "display": "standalone",
   "background_color": "#F7F5F1",
   "theme_color": "#4A6B4D",
   "orientation": "portrait",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/floracao/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/floracao/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/floracao/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
