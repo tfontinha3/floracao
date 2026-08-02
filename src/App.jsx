@@ -231,16 +231,19 @@ function FastEntryView({ data }) {
           {flowerOpen && flowerQuery && matches.length > 0 && (
             <div style={dropdownStyle}>
               {matches.map((f) => (
-                <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>
-                  <div>{highlightMatch(f.name, flowerQuery)}</div>
-                  {/* quando o match veio de um alias, mostra-o — senão parece
-                      que a app devolveu uma flor que não tem nada a ver */}
-                  {f.viaAlias && (
-                    <div style={dropdownItemFamilyStyle}>
-                      também <strong>{f.viaAlias}</strong>{f.family ? ` · ${f.family}` : ""}
-                    </div>
-                  )}
-                  {!f.viaAlias && f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
+                <div key={f.id} onClick={() => pickFlower(f)} style={{ ...dropdownItemStyle, display: "flex", alignItems: "center", gap: 10 }}>
+                  <FlowerThumb flower={f} size={34} />
+                  <div>
+                    <div>{highlightMatch(f.name, flowerQuery)}</div>
+                    {/* quando o match veio de um alias, mostra-o — senão parece
+                        que a app devolveu uma flor que não tem nada a ver */}
+                    {f.viaAlias && (
+                      <div style={dropdownItemFamilyStyle}>
+                        também <strong>{f.viaAlias}</strong>{f.family ? ` · ${f.family}` : ""}
+                      </div>
+                    )}
+                    {!f.viaAlias && f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -422,6 +425,34 @@ function DeliveryCalendar({ selected, onSelect }) {
   );
 }
 
+/* Miniatura da flor. A foto é da família, não da variedade — ver fotos.sql.
+   Cai no ícone quando não há foto ou quando a imagem falha a carregar (o
+   telemóvel do Heitor anda em dados móveis pelas rotas, e uma imagem partida
+   ficava pior do que o ícone). */
+function FlowerThumb({ flower, size = 40 }) {
+  const [failed, setFailed] = useState(false);
+  const base = {
+    width: size, height: size, borderRadius: 8, flexShrink: 0,
+    display: "flex", alignItems: "center", justifyContent: "center",
+  };
+
+  if (!flower.image_file || failed) {
+    return <div style={{ ...base, background: "#F2EFE8" }}><Flower2 size={size * 0.42} color="#4A6B4D" /></div>;
+  }
+  // A BD guarda só o nome do ficheiro; o caminho compõe-se com o base do Vite,
+  // para isto sobreviver a uma mudança de domínio (sair do subpath /floracao/).
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}flores/${flower.image_file}`}
+      alt={flower.name}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+      style={{ ...base, objectFit: "cover", background: "#F2EFE8" }}
+    />
+  );
+}
+
 /* ============================================================
    CATÁLOGO DE FLORES (só consulta)
    ============================================================ */
@@ -459,14 +490,20 @@ function FlowerCatalogView({ data }) {
           <div style={{ background: "#FFFFFF", borderRadius: 14, border: "1px solid #EEEAE0", overflow: "hidden" }}>
             {items.map((f, i) => (
               <div key={f.id} style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+                display: "flex", alignItems: "center", gap: 10, padding: "9px 14px",
                 borderTop: i > 0 ? "1px solid #F2EFE8" : "none",
               }}>
-                <Flower2 size={15} color="#4A6B4D" />
+                <FlowerThumb flower={f} size={40} />
                 <span style={{ fontSize: 14, fontWeight: 600, color: "#2B2A26" }}>{f.name}</span>
               </div>
             ))}
           </div>
+          {/* A licença CC BY-SA das fotos exige atribuição visível. */}
+          {items[0]?.image_credit && (
+            <div style={{ fontSize: 10, color: "#B0AB9E", marginTop: 5, paddingLeft: 2 }}>
+              foto: {items[0].image_credit}
+            </div>
+          )}
         </div>
       ))}
     </div>

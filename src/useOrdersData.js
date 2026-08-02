@@ -15,7 +15,7 @@ export function useOrdersData() {
   const loadReferenceData = useCallback(async () => {
     const [{ data: emp, error: e1 }, { data: fl, error: e2 }] = await Promise.all([
       supabase.from('employees').select('id, name, is_owner').eq('active', true).order('is_owner', { ascending: false }),
-      supabase.from('flowers').select('id, name, unit, family, aliases').eq('active', true).order('name'),
+      supabase.from('flowers').select('id, name, unit, family, aliases, image_file, image_credit').eq('active', true).order('name'),
     ])
     if (e1 || e2) { setError(e1 || e2); return }
     setEmployees(emp)
