@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Plus, Minus, LayoutGrid, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Flower2, Zap, Lock } from "lucide-react";
+import { Plus, Minus, LayoutGrid, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Flower2, Zap, Lock, CalendarDays, X } from "lucide-react";
 import { useOrdersData } from "./useOrdersData";
 
 const PIN_STORAGE_KEY = "floracao_unlocked";
@@ -131,12 +131,22 @@ function FastEntryView({ data }) {
   const [qty, setQty] = useState(1);
   const [flashTotal, setFlashTotal] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const flowerRef = useRef(null);
 
+  // Procura pelo nome e pelos aliases: o Heitor chama "Estoma" ao Lisianthus e
+  // "Lilium" ao lírio, e é por esses nomes que os clientes pedem.
   const matches = useMemo(() => {
     if (!flowerQuery.trim()) return [];
     const q = flowerQuery.toLowerCase();
-    return flowers.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 6);
+    return flowers
+      .map((f) => {
+        if (f.name.toLowerCase().includes(q)) return { ...f, viaAlias: null };
+        const alias = (f.aliases ?? []).find((a) => a.toLowerCase().includes(q));
+        return alias ? { ...f, viaAlias: alias } : null;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
   }, [flowerQuery, flowers]);
 
   // Sessão: entradas do dono para a data escolhida, vindas do detalhe já carregado
@@ -193,14 +203,14 @@ function FastEntryView({ data }) {
         <div style={eyebrowStyle}>Modo Rápido — {ownerName}</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#2B2A26", marginTop: 2 }}>Bater o papel</div>
         <div style={{ fontSize: 13, color: "#8A8377", marginTop: 4 }}>
-          A registar para <strong style={{ color: "#4A6B4D" }}>{formatDateLabel(date).toLowerCase()}</strong> — escolhe outro dia no calendário em baixo.
+          A registar para <strong style={{ color: "#4A6B4D" }}>{formatDateLabel(date).toLowerCase()}</strong> — o dia mantém-se em todas as linhas até o trocares.
         </div>
       </div>
 
       <div style={liveBannerStyle}>
         <div>
           <div style={{ fontSize: 11, color: "#EAF0EA", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" }}>Total desta sessão</div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: "#FFFFFF", marginTop: 2 }}>{totalQty} <span style={{ fontSize: 14, fontWeight: 600 }}>molhos</span></div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "#FFFFFF", marginTop: 2 }}>{totalQty} <span style={{ fontSize: 14, fontWeight: 600 }}>caixas</span></div>
         </div>
         <div style={{ fontSize: 12, color: "#EAF0EA", textAlign: "right" }}>{sessionEntries.length} linha{sessionEntries.length !== 1 ? "s" : ""}<br />registadas</div>
       </div>
@@ -223,12 +233,30 @@ function FastEntryView({ data }) {
               {matches.map((f) => (
                 <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>
                   <div>{highlightMatch(f.name, flowerQuery)}</div>
-                  {f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
+                  {/* quando o match veio de um alias, mostra-o — senão parece
+                      que a app devolveu uma flor que não tem nada a ver */}
+                  {f.viaAlias && (
+                    <div style={dropdownItemFamilyStyle}>
+                      também <strong>{f.viaAlias}</strong>{f.family ? ` · ${f.family}` : ""}
+                    </div>
+                  )}
+                  {!f.viaAlias && f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Data logo por baixo da flor: o pai regista por dia, por isso o dia
+            tem de estar à mão e à vista sem sair do sítio onde bate o papel. */}
+        <button onClick={() => setCalendarOpen(true)} style={dateChipStyle}>
+          <CalendarDays size={16} color="#4A6B4D" />
+          <span style={{ flex: 1, textAlign: "left" }}>
+            <span style={{ color: "#8A8377", fontWeight: 600 }}>Para quando? </span>
+            <strong style={{ color: "#2B2A26" }}>{formatDateLabel(date).toLowerCase()}</strong>
+          </span>
+          <ChevronDown size={16} color="#B0AB9E" />
+        </button>
 
         <div style={{ display: "flex", alignItems: "flex-end", gap: 10, justifyContent: "space-between" }}>
           <div>
@@ -274,9 +302,45 @@ function FastEntryView({ data }) {
         <div style={{ textAlign: "center", color: "#B0AB9E", padding: "24px 0", fontSize: 13 }}>Ainda sem linhas nesta sessão. Começa a bater o papel ↑</div>
       )}
 
-      <div style={{ marginTop: 18 }}>
-        <div style={{ ...eyebrowStyle, marginBottom: 8 }}>Data de entrega</div>
-        <DeliveryCalendar selected={date} onSelect={setDate} />
+      {calendarOpen && (
+        <DateModal
+          date={date}
+          onSelect={(iso) => { setDate(iso); setCalendarOpen(false); }}
+          onClose={() => setCalendarOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* Modal da data. Fecha ao escolher o dia — uma escolha, um toque, e volta
+   logo ao campo da flor. */
+function DateModal({ date, onSelect, onClose }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    // trava o scroll da página por trás enquanto o modal está aberto
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  return (
+    <div onClick={onClose} style={modalOverlayStyle}>
+      <div onClick={(e) => e.stopPropagation()} style={modalSheetStyle}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div>
+            <div style={eyebrowStyle}>Data de entrega</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#2B2A26", textTransform: "capitalize" }}>
+              {formatDateLabel(date)}
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Fechar" style={modalCloseStyle}><X size={18} /></button>
+        </div>
+        <DeliveryCalendar selected={date} onSelect={onSelect} />
       </div>
     </div>
   );
@@ -305,7 +369,13 @@ function buildCalendarWeeks(viewDate) {
 
 function DeliveryCalendar({ selected, onSelect }) {
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
+  // Abre no mês da data já escolhida, não no mês corrente: dentro do modal este
+  // componente é remontado a cada abertura, e cair sempre em agosto obrigaria a
+  // voltar a navegar até setembro em cada linha.
+  const [viewDate, setViewDate] = useState(() => {
+    const d = selected ? new Date(selected + "T00:00:00") : new Date();
+    d.setDate(1); d.setHours(0, 0, 0, 0); return d;
+  });
 
   const monthLabel = viewDate.toLocaleDateString("pt-PT", { month: "long", year: "numeric" });
   const weeks = useMemo(() => buildCalendarWeeks(viewDate), [viewDate]);
@@ -434,7 +504,7 @@ function FatherView({ data }) {
 
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
         <div style={summaryCardStyle}><div style={summaryNumStyle}>{totalOrders}</div><div style={summaryLabelStyle}>encomendas</div></div>
-        <div style={summaryCardStyle}><div style={summaryNumStyle}>{totalQty}</div><div style={summaryLabelStyle}>molhos no total</div></div>
+        <div style={summaryCardStyle}><div style={summaryNumStyle}>{totalQty}</div><div style={summaryLabelStyle}>caixas no total</div></div>
         <div style={summaryCardStyle}><div style={summaryNumStyle}>{grouped.length}</div><div style={summaryLabelStyle}>dias com entregas</div></div>
       </div>
 
@@ -446,7 +516,7 @@ function FatherView({ data }) {
           <div key={date} style={{ marginBottom: 22 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#2B2A26", textTransform: "capitalize" }}>Entrega — {formatDateLabel(date)}</div>
-              <div style={{ fontSize: 12, color: "#8A8377", fontWeight: 600 }}>{dayTotal} molhos</div>
+              <div style={{ fontSize: 12, color: "#8A8377", fontWeight: 600 }}>{dayTotal} caixas</div>
             </div>
             <div style={{ background: "#FFFFFF", borderRadius: 14, border: "1px solid #EEEAE0", overflow: "hidden" }}>
               {flowers.map((f, i) => {
@@ -523,6 +593,10 @@ const eyebrowStyle = { fontSize: 12, letterSpacing: 1.5, textTransform: "upperca
 const labelStyle = { display: "block", fontSize: 12, fontWeight: 600, color: "#8A8377", marginBottom: 6, marginTop: 2 };
 const inputStyleSm = { width: "100%", padding: "10px 10px", borderRadius: 9, border: "1.5px solid #E3DFD5", fontSize: 14.5, outline: "none", boxSizing: "border-box", color: "#2B2A26", background: "#FCFBF9" };
 const dropdownStyle = { position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#FFFFFF", border: "1.5px solid #E3DFD5", borderRadius: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden" };
+const dateChipStyle = { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "11px 12px", marginBottom: 12, borderRadius: 10, border: "1.5px solid #E3DFD5", background: "#FCFBF9", fontSize: 14.5, cursor: "pointer", boxSizing: "border-box" };
+const modalOverlayStyle = { position: "fixed", inset: 0, background: "rgba(43,42,38,0.45)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 100, padding: 12 };
+const modalSheetStyle = { background: "#FBF9F4", borderRadius: 20, padding: 16, width: "100%", maxWidth: 420, maxHeight: "88vh", overflowY: "auto", boxShadow: "0 -6px 28px rgba(0,0,0,0.18)", paddingBottom: "calc(16px + env(safe-area-inset-bottom))" };
+const modalCloseStyle = { display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: "50%", border: "none", background: "#EFEBE2", color: "#5A5449", cursor: "pointer", flexShrink: 0 };
 const dropdownItemStyle = { padding: "12px 14px", fontSize: 15, color: "#2B2A26", cursor: "pointer", borderBottom: "1px solid #F2EFE8" };
 const dropdownItemFamilyStyle = { fontSize: 11.5, color: "#B0AB9E", marginTop: 1 };
 const stepperBtnStyleSm = { width: 34, height: 34, borderRadius: 8, border: "1.5px solid #E3DFD5", background: "#FCFBF9", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#2B2A26" };
