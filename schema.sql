@@ -119,10 +119,10 @@ insert into flowers (name, unit, family) values
   ('Crisântemo Branco', 'molho', 'Crisântemos'), ('Crisântemo Amarelo', 'molho', 'Crisântemos'),
   ('Crisântemo Bronze', 'molho', 'Crisântemos'), ('Crisântemo Lilás', 'molho', 'Crisântemos'),
   ('Crisântemo Pompom Misto', 'molho', 'Crisântemos'), ('Spray Crisântemo', 'molho', 'Crisântemos'),
-  -- Gérberas
-  ('Gérbera Mista', 'molho', 'Gérberas'), ('Gérbera Vermelha', 'molho', 'Gérberas'), ('Gérbera Amarela', 'molho', 'Gérberas'),
-  ('Gérbera Laranja', 'molho', 'Gérberas'), ('Gérbera Rosa', 'molho', 'Gérberas'), ('Gérbera Branca', 'molho', 'Gérberas'),
-  ('Mini Gérbera', 'molho', 'Gérberas'),
+  -- Gerberas
+  ('Gerbera Mista', 'molho', 'Gerberas'), ('Gerbera Vermelha', 'molho', 'Gerberas'), ('Gerbera Amarela', 'molho', 'Gerberas'),
+  ('Gerbera Laranja', 'molho', 'Gerberas'), ('Gerbera Rosa', 'molho', 'Gerberas'), ('Gerbera Branca', 'molho', 'Gerberas'),
+  ('Mini Gerbera', 'molho', 'Gerberas'),
   -- Tulipas
   ('Tulipa Amarela', 'molho', 'Tulipas'), ('Tulipa Vermelha', 'molho', 'Tulipas'), ('Tulipa Rosa', 'molho', 'Tulipas'),
   ('Tulipa Branca', 'molho', 'Tulipas'), ('Tulipa Roxa', 'molho', 'Tulipas'), ('Tulipa Papagaio', 'molho', 'Tulipas'),
@@ -132,6 +132,18 @@ insert into flowers (name, unit, family) values
   -- Orquídeas
   ('Orquídea Branca', 'molho', 'Orquídeas'), ('Orquídea Roxa', 'molho', 'Orquídeas'),
   ('Orquídea Cymbidium', 'molho', 'Orquídeas'), ('Orquídea Dendrobium', 'molho', 'Orquídeas'),
+  -- Vivaz
+  ('Vivaz', 'molho', 'Vivaz'),
+  -- Gladíolos
+  ('Gladíolo', 'molho', 'Gladíolos'),
+  -- Antirrhinum (boca-de-leão)
+  ('Antirrhinum', 'molho', 'Antirrhinum'),
+  -- Lisianthus (estoma)
+  ('Lisianthus', 'molho', 'Lisianthus'),
+  -- Proteáceas
+  ('Leucadendron', 'molho', 'Proteáceas'), ('Protea', 'molho', 'Proteáceas'),
+  -- Decorativos
+  ('Ananás', 'molho', 'Decorativos'),
   -- Hortênsias
   ('Hortênsia Azul', 'molho', 'Hortênsias'), ('Hortênsia Branca', 'molho', 'Hortênsias'),
   ('Hortênsia Rosa', 'molho', 'Hortênsias'), ('Hortênsia Verde Antique', 'molho', 'Hortênsias'),
@@ -158,13 +170,17 @@ insert into flowers (name, unit, family) values
   -- Enchimento
   ('Gypsophila Branca', 'molho', 'Enchimento'), ('Gypsophila Rosa', 'molho', 'Enchimento'),
   ('Statice Roxo', 'molho', 'Enchimento'), ('Statice Misto', 'molho', 'Enchimento'), ('Limonium', 'molho', 'Enchimento'),
+  ('Hypericum', 'molho', 'Enchimento'), ('Solidago', 'molho', 'Enchimento'),
   -- Ranúnculos
   ('Ranúnculo Vermelho', 'molho', 'Ranúnculos'), ('Ranúnculo Rosa', 'molho', 'Ranúnculos'),
   ('Ranúnculo Branco', 'molho', 'Ranúnculos'), ('Ranúnculo Misto', 'molho', 'Ranúnculos'),
   -- Folhagens/Verdes
   ('Feto', 'molho', 'Folhagens/Verdes'), ('Eucalipto', 'molho', 'Folhagens/Verdes'), ('Salal', 'molho', 'Folhagens/Verdes'),
   ('Aspidistra', 'molho', 'Folhagens/Verdes'), ('Samambaia', 'molho', 'Folhagens/Verdes'), ('Ruscus', 'molho', 'Folhagens/Verdes'),
-  ('Folha de Monstera', 'molho', 'Folhagens/Verdes'), ('Folha de Palmeira', 'molho', 'Folhagens/Verdes'), ('Avenca', 'molho', 'Folhagens/Verdes');
+  ('Folha de Monstera', 'molho', 'Folhagens/Verdes'), ('Folha de Palmeira', 'molho', 'Folhagens/Verdes'), ('Avenca', 'molho', 'Folhagens/Verdes'),
+  ('Folha de Estrelícia', 'molho', 'Folhagens/Verdes'), ('Beargrass', 'molho', 'Folhagens/Verdes'),
+  ('Folha de Roebellini', 'molho', 'Folhagens/Verdes'), ('Arália', 'molho', 'Folhagens/Verdes'),
+  ('Snakegrass', 'molho', 'Folhagens/Verdes'), ('Bambu', 'molho', 'Folhagens/Verdes'), ('Feto Azul', 'molho', 'Folhagens/Verdes');
 
 -- ============================================
 -- FUTURO (fase 2): Fornecedores

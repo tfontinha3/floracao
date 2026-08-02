@@ -117,6 +117,8 @@ function TabButton({ active, onClick, icon, label }) {
    MODO RÁPIDO — ecrã do pai
    ============================================================ */
 
+const QUICK_ENTRY_CLIENT = "Sem cliente";
+
 function FastEntryView({ data }) {
   const { employees, flowers, detalhe, addOrder } = data;
   const ownerName = employees.find((e) => e.is_owner)?.name ?? "";
@@ -124,14 +126,12 @@ function FastEntryView({ data }) {
   const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
   const [date, setDate] = useState(tomorrowStr);
-  const [client, setClient] = useState("");
   const [flowerQuery, setFlowerQuery] = useState("");
   const [flowerOpen, setFlowerOpen] = useState(false);
   const [selectedFlower, setSelectedFlower] = useState(null);
   const [qty, setQty] = useState(1);
   const [flashTotal, setFlashTotal] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const clientRef = useRef(null);
   const flowerRef = useRef(null);
 
   const matches = useMemo(() => {
@@ -161,20 +161,20 @@ function FastEntryView({ data }) {
   }
 
   async function addLine() {
-    if (!client.trim() || !selectedFlower || qty <= 0 || submitting) return;
+    if (!selectedFlower || qty <= 0 || submitting) return;
     setSubmitting(true);
     try {
       await addOrder({
         employeeName: ownerName,
-        clientName: client,
+        clientName: QUICK_ENTRY_CLIENT,
         flowerName: selectedFlower,
         quantity: qty,
         deliveryDate: date,
       });
       setFlashTotal(selectedFlower);
       setTimeout(() => setFlashTotal(null), 900);
-      setClient(""); setFlowerQuery(""); setSelectedFlower(null); setQty(1);
-      setTimeout(() => clientRef.current?.focus(), 50);
+      setFlowerQuery(""); setSelectedFlower(null); setQty(1);
+      setTimeout(() => flowerRef.current?.focus(), 50);
     } catch (err) {
       alert("Erro ao guardar: " + err.message);
     } finally {
@@ -182,14 +182,11 @@ function FastEntryView({ data }) {
     }
   }
 
-  function handleClientKeyDown(e) {
-    if (e.key === "Enter") { e.preventDefault(); flowerRef.current?.focus(); }
-  }
   function handleFlowerKeyDown(e) {
     if (e.key === "Enter" && matches.length > 0 && !selectedFlower) { e.preventDefault(); pickFlower(matches[0]); }
   }
 
-  const canAdd = client.trim() && selectedFlower && qty > 0 && !submitting;
+  const canAdd = selectedFlower && qty > 0 && !submitting;
 
   return (
     <div style={{ padding: "20px 16px 8px" }}>
@@ -214,33 +211,28 @@ function FastEntryView({ data }) {
       </div>
 
       <div style={{ background: "#FFFFFF", borderRadius: 16, padding: 16, border: "1px solid #EEEAE0", marginBottom: 18 }}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-          <div style={{ flex: 1.1 }}>
-            <label style={labelStyle}>Cliente</label>
-            <input ref={clientRef} value={client} onChange={(e) => setClient(e.target.value)} onKeyDown={handleClientKeyDown} placeholder="Nome" style={inputStyleSm} autoFocus />
-          </div>
-          <div style={{ flex: 1.4, position: "relative" }}>
-            <label style={labelStyle}>Flor</label>
-            <input
-              ref={flowerRef}
-              value={flowerQuery}
-              onChange={(e) => { setFlowerQuery(e.target.value); setSelectedFlower(null); setFlowerOpen(true); }}
-              onFocus={() => setFlowerOpen(true)}
-              onKeyDown={handleFlowerKeyDown}
-              placeholder="Procurar..."
-              style={{ ...inputStyleSm, border: selectedFlower ? "2px solid #4A6B4D" : "1.5px solid #E3DFD5" }}
-            />
-            {flowerOpen && flowerQuery && matches.length > 0 && (
-              <div style={dropdownStyle}>
-                {matches.map((f) => (
-                  <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>
-                    <div>{highlightMatch(f.name, flowerQuery)}</div>
-                    {f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <div style={{ marginBottom: 10, position: "relative" }}>
+          <label style={labelStyle}>Flor</label>
+          <input
+            ref={flowerRef}
+            value={flowerQuery}
+            onChange={(e) => { setFlowerQuery(e.target.value); setSelectedFlower(null); setFlowerOpen(true); }}
+            onFocus={() => setFlowerOpen(true)}
+            onKeyDown={handleFlowerKeyDown}
+            placeholder="Procurar..."
+            style={{ ...inputStyleSm, border: selectedFlower ? "2px solid #4A6B4D" : "1.5px solid #E3DFD5" }}
+            autoFocus
+          />
+          {flowerOpen && flowerQuery && matches.length > 0 && (
+            <div style={dropdownStyle}>
+              {matches.map((f) => (
+                <div key={f.id} onClick={() => pickFlower(f)} style={dropdownItemStyle}>
+                  <div>{highlightMatch(f.name, flowerQuery)}</div>
+                  {f.family && <div style={dropdownItemFamilyStyle}>{f.family}</div>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", alignItems: "flex-end", gap: 10, justifyContent: "space-between" }}>
